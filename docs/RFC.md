@@ -82,3 +82,4 @@ Trade-off que levou ao descarte: MySQL não tem um listener nativo equivalente. 
 - [ADR-004: Garantia de entrega at-least-once com deduplicação pelo cliente](adrs/ADR-004-garantia-entrega-at-least-once.md)
 - [ADR-005: Assinatura HMAC-SHA256 com Secret por Endpoint de Webhook e Rotação com Grace Period](adrs/ADR-005-hmac-secret-por-endpoint-rotacao.md)
 - [ADR-006: Snapshot do Payload no Momento da Inserção do Evento](adrs/ADR-006-snapshot-payload-insercao-evento.md)
+- [ADR-007: Reuso dos Padrões Existentes do Projeto no Módulo de Webhooks](adrs/ADR-007-reuso-padroes-existentes-projeto.md)

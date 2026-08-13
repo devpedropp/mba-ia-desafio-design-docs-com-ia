@@ -4,7 +4,7 @@
 **Data:** 13-08-2026
 **Related ADRs:** [ADR-001](./ADR-001-outbox-pattern-mysql-vs-fila-dedicada.md), [ADR-003](./ADR-003-retry-backoff-exponencial-dead-letter-queue.md)
 
-## Contexto e Problema
+## Contexto
 
 A feature de webhooks de notificação de pedidos usa o padrão outbox: dentro da mesma transação que muda o status de um pedido, um evento é gravado na tabela `webhook_outbox`. É necessário um mecanismo separado para consumir esses eventos pendentes e realizar as entregas HTTP aos clientes, sem acoplar esse processamento ao ciclo de vida da API.
 
@@ -20,13 +20,13 @@ O requisito de negócio aceito para esta entrega é entregar o evento ao cliente
 - Necessidade de o worker sobreviver a reinícios da API, exigindo isolamento entre os dois processos.
 - Preservação da garantia de ordering de eventos por pedido, hoje dependente de um único worker processando a outbox.
 
-## Opções Consideradas
+## Alternativas Consideradas
 
 - Worker dedicado, em processo separado da API, com polling periódico da outbox a cada 2 segundos.
 - Worker reativo via trigger/listener de banco, equivalente ao NOTIFY/LISTEN do PostgreSQL.
 - Processamento embutido no mesmo processo da API, sem um worker dedicado.
 
-## Decisão Tomada
+## Decisão
 
 Opção escolhida: worker dedicado em processo separado (`src/worker.ts`), com sua própria instância de `PrismaClient` sobre o mesmo banco, fazendo polling da outbox a cada 2 segundos e processando os eventos pendentes mais antigos em lote pequeno.
 

@@ -97,27 +97,78 @@ Os status codes indicados abaixo não foram citados literalmente na reunião (a 
   - `400 Bad Request` (`WEBHOOK_INVALID_URL`) — URL cadastrada sem HTTPS é recusada com erro de validação
   - `401 Unauthorized` — token ausente ou inválido, seguindo o padrão já usado pelos demais endpoints autenticados
 
-**Campos discutidos em reunião**
+Campos discutidos em reunião: `url` (deve ser HTTPS), `statuses` (lista de status de pedido que o webhook quer receber), `customerId` (informado no body ou no path, não vem do JWT), `secret` (gerada pelo sistema, devolvida somente na criação) e `active` (estado ativo do cadastro, confirmado como parte da tabela de configuração).
 
-Requisição
-- `url`: endereço do webhook do cliente, deve ser HTTPS
-- `statuses`: lista de status de pedido que o webhook quer receber
-- `customerId`: informado no body ou no path (não vem do JWT do usuário autenticado)
+**Exemplo de requisição**
+```json
+{
+  "customerId": "b2f0a6b0-1e0a-4a3e-9c1a-2f9a1a2b3c4d",
+  "url": "https://integracoes.atlascomercial.com.br/webhooks/pedidos",
+  "statuses": ["SHIPPED", "DELIVERED"]
+}
+```
 
-Resposta
-- `secret`: gerada pelo sistema e devolvida somente na criação
-- `active`: estado ativo do cadastro (campo confirmado como parte da tabela de configuração, junto de `url`, `secret` e `customerId`)
+**Exemplo de resposta (`201 Created`)**
+```json
+{
+  "customerId": "b2f0a6b0-1e0a-4a3e-9c1a-2f9a1a2b3c4d",
+  "url": "https://integracoes.atlascomercial.com.br/webhooks/pedidos",
+  "statuses": ["SHIPPED", "DELIVERED"],
+  "active": true,
+  "secret": "whsec_5f8a9c2e1b3d4f6a"
+}
+```
 
 ---
 
-**Edição, remoção e listagem de webhooks**
+**Edição de webhook**
 - Tipo: http_endpoint
-- Assinatura/Rota: PATCH para editar, DELETE para remover, GET para listar os webhooks de um customer (rotas exatas não foram detalhadas em reunião além do verbo e do recurso)
-- Método: PATCH / DELETE / GET
+- Assinatura/Rota: PATCH para editar um webhook existente (rota exata não foi detalhada em reunião além do verbo e do recurso)
+- Método: PATCH
 - Semântica de status:
-  - `200 OK` — PATCH altera a configuração existente e retorna o webhook atualizado; GET lista os webhooks cadastrados de um customer
+  - `200 OK` — altera a configuração existente e retorna o webhook atualizado
+  - `404 Not Found` (`WEBHOOK_NOT_FOUND`) — webhook inexistente
+
+**Exemplo de requisição**
+```json
+{
+  "statuses": ["PAID", "SHIPPED", "DELIVERED"],
+  "active": true
+}
+```
+
+**Exemplo de resposta (`200 OK`)**
+```json
+{
+  "customerId": "b2f0a6b0-1e0a-4a3e-9c1a-2f9a1a2b3c4d",
+  "url": "https://integracoes.atlascomercial.com.br/webhooks/pedidos",
+  "statuses": ["PAID", "SHIPPED", "DELIVERED"],
+  "active": true
+}
+```
+
+---
+
+**Remoção e listagem de webhooks**
+- Tipo: http_endpoint
+- Assinatura/Rota: DELETE para remover, GET para listar os webhooks de um customer (rotas exatas não foram detalhadas em reunião além do verbo e do recurso)
+- Método: DELETE / GET
+- Semântica de status:
   - `204 No Content` — DELETE remove o cadastro
-  - `404 Not Found` (`WEBHOOK_NOT_FOUND`) — webhook inexistente (PATCH/DELETE)
+  - `200 OK` — GET lista os webhooks cadastrados de um customer
+  - `404 Not Found` (`WEBHOOK_NOT_FOUND`) — webhook inexistente (DELETE)
+
+**Exemplo de resposta (GET, `200 OK`)**
+```json
+[
+  {
+    "customerId": "b2f0a6b0-1e0a-4a3e-9c1a-2f9a1a2b3c4d",
+    "url": "https://integracoes.atlascomercial.com.br/webhooks/pedidos",
+    "statuses": ["PAID", "SHIPPED", "DELIVERED"],
+    "active": true
+  }
+]
+```
 
 ---
 
@@ -129,6 +180,19 @@ Resposta
   - `200 OK` — gera uma nova secret; a secret anterior permanece válida por 24 horas em paralelo, depois deixa de ser aceita
   - `404 Not Found` (`WEBHOOK_NOT_FOUND`) — webhook inexistente
 
+**Exemplo de requisição**
+```json
+{}
+```
+
+**Exemplo de resposta (`200 OK`)**
+```json
+{
+  "secret": "whsec_9a2b7c4d1e6f3a8c",
+  "previousSecretValidUntil": "2026-08-14T12:00:00.000Z"
+}
+```
+
 ---
 
 **Histórico de entregas**
@@ -138,6 +202,18 @@ Resposta
 - Semântica de status:
   - `200 OK` — retorna os últimos 100 webhooks enviados para aquele cadastro, com sucesso ou falha, payload, resposta recebida e tempo de resposta
   - `404 Not Found` (`WEBHOOK_NOT_FOUND`) — webhook inexistente
+
+**Exemplo de resposta (`200 OK`)**
+```json
+[
+  {
+    "eventId": "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+    "success": true,
+    "responseReceived": "{ \"received\": true }",
+    "responseTimeMs": 184
+  }
+]
+```
 
 ---
 
@@ -149,6 +225,19 @@ Resposta
   - `200 OK` — recoloca o evento na outbox como pendente; a ação é logada, registrando quem executou o replay, para auditoria
   - `403 Forbidden` — requer papel ADMIN; usuário autenticado sem esse papel não pode acessar
   - `404 Not Found` (`WEBHOOK_NOT_FOUND`) — registro de dead letter inexistente
+
+**Exemplo de requisição**
+```json
+{}
+```
+
+**Exemplo de resposta (`200 OK`)**
+```json
+{
+  "eventId": "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+  "status": "pendente"
+}
+```
 
 ---
 

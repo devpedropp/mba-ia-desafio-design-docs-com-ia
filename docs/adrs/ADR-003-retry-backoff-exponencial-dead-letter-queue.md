@@ -6,7 +6,7 @@
 
 ---
 
-## Contexto e Declaração do Problema
+## Contexto
 
 O sistema de webhooks outbound entrega notificações de mudança de status de pedido a clientes
 B2B de forma assíncrona: um worker dedicado faz polling da outbox e envia chamadas HTTP com
@@ -36,13 +36,13 @@ histórico de commits ou código-fonte.
 - Minimizar a complexidade operacional adicional, mantendo baixa complexidade de implementação.
 - Deixar claro para quem dá suporte onde investigar e como reprocessar manualmente uma falha permanente.
 
-## Opções Consideradas
+## Alternativas Consideradas
 
 - 5 tentativas com backoff exponencial (1m/5m/30m/2h/12h) e falha permanente registrada em tabela `webhook_dead_letter` separada
 - 3 tentativas com backoff exponencial e falha permanente registrada em tabela `webhook_dead_letter` separada
 - Status "failed" na própria tabela de outbox, sem tabela dedicada de dead letter
 
-## Resultado da Decisão
+## Decisão
 
 Opção escolhida: **5 tentativas com backoff exponencial (1m/5m/30m/2h/12h), com falha
 permanente movida para uma tabela dedicada `webhook_dead_letter`**, porque essa janela de

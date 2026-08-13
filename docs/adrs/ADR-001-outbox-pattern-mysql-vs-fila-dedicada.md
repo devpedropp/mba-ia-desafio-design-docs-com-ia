@@ -2,11 +2,11 @@
 
 **Status:** Aceito
 **Data:** 13-08-2026
-**Related ADRs:** [ADR-002](./ADR-002-worker-dedicado-polling-vs-listener-reativo.md), [ADR-003](./ADR-003-retry-backoff-exponencial-dead-letter-queue.md)
+**Related ADRs:** [ADR-002](./ADR-002-worker-dedicado-polling-vs-listener-reativo.md), [ADR-003](./ADR-003-retry-backoff-exponencial-dead-letter-queue.md), [ADR-007](./ADR-007-reuso-padroes-existentes-projeto.md)
 
 ---
 
-## Contexto e Declaração do Problema
+## Contexto
 
 O sistema precisa notificar clientes B2B externos sobre mudanças de status de pedido através de webhooks outbound. A transação que realiza a mudança de status já é pesada: ela atualiza o pedido, insere um registro de histórico de status e decrementa o estoque dos produtos envolvidos. Chamar o endpoint HTTP do cliente de forma síncrona dentro dessa transação faria com que um cliente lento ou indisponível travasse mudanças de status de outros pedidos, sem que houvesse uma decisão clara sobre executar rollback em caso de falha de rede externa ao sistema.
 
@@ -23,7 +23,7 @@ Esta é uma decisão de arquitetura tomada durante a fase de design da feature d
 - Qualquer pessoa que altere a mudança de status de pedido ou integrações externas precisa compreender o padrão adotado.
 - Aceitar, de forma consciente, menor throughput e menor capacidade de escala horizontal em troca de simplicidade operacional.
 
-## Opções Consideradas
+## Alternativas Consideradas
 
 1. **Padrão outbox em tabela dedicada no MySQL já existente**: o evento de notificação é inserido dentro da mesma transação SQL da mudança de status, e um worker separado lê a tabela e realiza a entrega.
 
@@ -31,7 +31,7 @@ Esta é uma decisão de arquitetura tomada durante a fase de design da feature d
 
 3. **Fila ou mensageria dedicada (ex.: Redis Streams)**: produção e consumo dos eventos são desacoplados por uma peça de infraestrutura de mensageria separada do banco relacional já usado pelo projeto.
 
-## Resultado da Decisão
+## Decisão
 
 Opção escolhida: padrão outbox no MySQL, porque garante atomicidade transacional entre a mudança de status do pedido e o registro do evento sem exigir uma nova peça de infraestrutura, o que é adequado ao tamanho e à capacidade operacional atual do time. O evento é inserido numa tabela de outbox dentro da mesma transação SQL da mudança de status; um worker separado lê essa tabela e realiza as chamadas HTTP aos clientes.
 

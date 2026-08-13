@@ -4,7 +4,7 @@
 **Data:** 2026-08-13
 **Related ADRs:** [ADR-001](./ADR-001-outbox-pattern-mysql-vs-fila-dedicada.md), [ADR-003](./ADR-003-retry-backoff-exponencial-dead-letter-queue.md), [ADR-005](./ADR-005-hmac-secret-por-endpoint-rotacao.md), [ADR-006](./ADR-006-snapshot-payload-insercao-evento.md)
 
-## Contexto e Problema
+## Contexto
 
 Ao entregar eventos de webhook, o sistema precisa lidar com falhas de rede, timeouts e reentregas decorrentes de retries. Garantir entrega exactly-once exigiria coordenação complexa entre provedor e cliente (por exemplo, confirmação em duas fases), o que aumenta significativamente a complexidade de implementação e operação em ambos os lados. Diante disso, foi necessário decidir qual garantia de entrega o sistema ofereceria aos clientes integrados e como comunicar essa garantia de forma que os clientes pudessem lidar com eventos potencialmente duplicados.
 
@@ -21,7 +21,7 @@ Como a decisão define um contrato público — o comportamento de entrega que q
 - Baixa complexidade do lado do provedor evita a necessidade de protocolos de confirmação em duas fases entre os sistemas.
 - Qualquer pessoa desenhando a integração ou o portal do desenvolvedor precisa saber, desde o início, que duplicatas são esperadas.
 
-## Opções Consideradas
+## Alternativas Consideradas
 
 1. Entrega at-least-once com identificador único de evento (`X-Event-Id`) para deduplicação pelo cliente
 2. Entrega exactly-once com coordenação entre provedor e cliente

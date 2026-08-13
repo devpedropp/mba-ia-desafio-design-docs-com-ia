@@ -4,7 +4,7 @@
 **Data:** 13-08-2026
 **Related ADRs:** [ADR-001](./ADR-001-outbox-pattern-mysql-vs-fila-dedicada.md), [ADR-004](./ADR-004-garantia-entrega-at-least-once.md)
 
-## Contexto e Declaração do Problema
+## Contexto
 
 Cada mudança de status de um pedido gera um evento de webhook, que é primeiro persistido na `webhook_outbox` (dentro da mesma transação da mudança de status) e só depois entregue de forma assíncrona por um worker dedicado. Como a entrega usa retry com backoff exponencial (1 minuto, 5 minutos, 30 minutos, 2 horas e 12 horas, cobrindo uma janela de até aproximadamente 15 horas), pode haver um intervalo considerável entre o momento em que o evento é criado e o momento em que ele efetivamente chega ao cliente, seja por instabilidade do endpoint do cliente, seja por indisponibilidade temporária de rede.
 
@@ -20,7 +20,7 @@ A decisão foi tomada ao final de uma reunião técnica de definição da featur
 - Baixa complexidade de implementação: o pedido já está carregado na mesma transação em que o evento é inserido, então a renderização acontece uma única vez, nesse ponto.
 - Custo de manter dados potencialmente redundantes ou desatualizados em relação ao estado atual do pedido, armazenados dentro da própria outbox.
 
-## Opções Consideradas
+## Alternativas Consideradas
 
 1. Snapshot do payload renderizado no momento da inserção do evento na outbox (escolhida)
 2. Armazenar apenas o `order_id` na outbox e renderizar o payload completo no momento do envio pelo worker

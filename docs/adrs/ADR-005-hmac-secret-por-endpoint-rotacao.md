@@ -4,7 +4,7 @@
 **Data:** 2026-08-13
 **Related ADRs:** [ADR-004](./ADR-004-garantia-entrega-at-least-once.md)
 
-## Contexto e Problema
+## Contexto
 
 Toda chamada de webhook enviada ao cliente precisa ser autenticável, de forma que o cliente consiga verificar que a requisição realmente partiu da plataforma e não foi forjada por terceiros. Esse mecanismo de assinatura é a base de confiança de toda a integração externa: qualquer sistema de terceiros que consome webhooks depende dele para decidir se aceita ou rejeita uma notificação recebida. A decisão define que cada requisição de webhook é assinada com HMAC-SHA256 sobre o corpo da requisição, enviada no header `X-Signature`, usando uma secret específica daquele endpoint de webhook (não uma secret global compartilhada entre todos os clientes).
 
@@ -20,7 +20,7 @@ A alternativa de usar uma secret global da plataforma foi explicitamente descart
 - Já existe precedente real de vazamento de secret em log de aplicação de um cliente, reforçando a necessidade de isolamento por endpoint.
 - A rotação com duas secrets simultaneamente válidas adiciona complexidade operacional que precisa ser aceita em troca da migração sem interrupção.
 
-## Opções Consideradas
+## Alternativas Consideradas
 
 - Secret específica por endpoint de webhook, com rotação e grace period de 24 horas
 - Secret global da plataforma, compartilhada entre todos os endpoints
